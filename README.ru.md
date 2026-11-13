@@ -49,7 +49,7 @@
 ### Через Omarchy CLI
 
 ```bash
-omarchy plugin add https://github.com/SanchoKusika/omarchy-pulse
+omarchy plugin add https://github.com/AmirAdelevich/omarchy-pulse --enable
 ```
 
 ### Ручная установка
@@ -57,7 +57,7 @@ omarchy plugin add https://github.com/SanchoKusika/omarchy-pulse
 Склонируйте репозиторий в папку плагинов Omarchy и перезапустите шелл:
 
 ```bash
-git clone https://github.com/SanchoKusika/omarchy-pulse.git ~/.config/omarchy/plugins/io.github.sanchokusika.pulse
+git clone https://github.com/AmirAdelevich/omarchy-pulse.git ~/.config/omarchy/plugins/io.github.sanchokusika.pulse
 omarchy restart shell
 ```
 
@@ -118,9 +118,9 @@ omarchy restart shell
 
 | Параметр | Описание | По умолчанию |
 |---|---|---|
-| `style` | Стиль отображения: `"pulse"`, `"bars"` или `"text"` | `"pulse"` |
-| `metrics` | Список активных метрик на баре: `["cpu", "mem", "gpu", "temp"]` | `["cpu"]` |
-| `metricOrder` | Пользовательский порядок компонентов | `["cpu", "mem", "gpu", "temp"]` |
+| `style` | Стиль отображения: `"pulse"`, `"bars"` или `"text"` | `"text"` |
+| `metrics` | Список активных метрик на баре: `["cpu", "mem", "gpu", "temp", "gpuTemp"]` | `["cpu", "mem", "gpu", "temp", "gpuTemp"]` |
+| `metricOrder` | Пользовательский порядок компонентов | `["cpu", "mem", "gpu", "temp", "gpuTemp"]` |
 | `interval` | Интервал обновления в секундах (1–10) | `2` |
 | `alert` | Порог тревоги в % для срочного цвета и пульсации (50–100) | `90` |
 

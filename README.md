@@ -49,7 +49,7 @@ Pick your preferred style on the fly with **Right click** or inside the panel. W
 ### Via Omarchy CLI
 
 ```bash
-omarchy plugin add https://github.com/SanchoKusika/omarchy-pulse
+omarchy plugin add https://github.com/AmirAdelevich/omarchy-pulse --enable
 ```
 
 ### Manual Installation
@@ -57,7 +57,7 @@ omarchy plugin add https://github.com/SanchoKusika/omarchy-pulse
 Clone the repository into your Omarchy plugins directory and restart the shell:
 
 ```bash
-git clone https://github.com/SanchoKusika/omarchy-pulse.git ~/.config/omarchy/plugins/io.github.sanchokusika.pulse
+git clone https://github.com/AmirAdelevich/omarchy-pulse.git ~/.config/omarchy/plugins/io.github.sanchokusika.pulse
 omarchy restart shell
 ```
 
@@ -118,9 +118,9 @@ Settings are saved in `~/.config/omarchy/shell.json`:
 
 | Key | Description | Default |
 |---|---|---|
-| `style` | Bar look: `"pulse"`, `"bars"`, or `"text"` | `"pulse"` |
-| `metrics` | Active metrics displayed on the bar: `["cpu", "mem", "gpu", "temp"]` | `["cpu"]` |
-| `metricOrder` | User's preferred sequence of components | `["cpu", "mem", "gpu", "temp"]` |
+| `style` | Bar look: `"pulse"`, `"bars"`, or `"text"` | `"text"` |
+| `metrics` | Active metrics displayed on the bar: `["cpu", "mem", "gpu", "temp", "gpuTemp"]` | `["cpu", "mem", "gpu", "temp", "gpuTemp"]` |
+| `metricOrder` | User's preferred sequence of components | `["cpu", "mem", "gpu", "temp", "gpuTemp"]` |
 | `interval` | Sampling frequency in seconds (1–10) | `2` |
 | `alert` | Load % threshold for urgent color and ripple alerts (50–100) | `90` |
 
