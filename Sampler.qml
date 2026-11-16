@@ -25,6 +25,49 @@ Item {
   property real gpu: -1
   property real vramUsed: 0
   property real vramTotal: 0
+  property var drives: []
+  property real ssdTemp: NaN
+  readonly property bool hasSsdTemp: Number.isFinite(ssdTemp)
+  readonly property bool ssdHot: drives.some(drive => drive.alarm
+    || drive.current >= drive.warning || drive.current >= drive.critical)
+  property var ssdTempHistory: []
+
+  Process {
+    id: drivePoll
+    command: ["bash", Qt.resolvedUrl("nvme-status.sh").toString().replace(/^file:\/\//, "")]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        function temperature(value) {
+          return /^-?\d+$/.test(value) ? Number(value) / 1000 : NaN
+        }
+
+        root.drives = text.split("\n").filter(line => line.length > 0).map(line => {
+          const [id, model, state, current, warning, critical, alarm] = line.split("\t")
+          return {
+            id, model: model.trim(), state,
+            current: temperature(current), warning: temperature(warning),
+            critical: temperature(critical), alarm: alarm === "1"
+          }
+        })
+        const temperatures = root.drives.map(drive => drive.current).filter(Number.isFinite)
+        root.ssdTemp = temperatures.length ? Math.max(...temperatures) : NaN
+        if (root.hasSsdTemp) {
+          root.ssdTempHistory = Model.pushHistory(root.ssdTempHistory, Model.tempFraction(root.ssdTemp), Model.HISTORY)
+        } else {
+          root.ssdTempHistory = []
+        }
+      }
+    }
+  }
+
+  Timer {
+    interval: root.interval * 1000
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: drivePoll.running = true
+  }
+
   property real gpuTemp: NaN
   readonly property bool hasGpuTemp: isFinite(gpuTemp)
   property var gpuTempHistory: []

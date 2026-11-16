@@ -61,11 +61,12 @@ BarWidget {
     }
   }
 
-  readonly property bool hot: cpuHot || memHot || gpuHot || tempHot || gpuTempHot
+  readonly property bool hot: cpuHot || memHot || gpuHot || tempHot || gpuTempHot || sampler.ssdHot
 
   function isHot(metric) {
     if (metric === "mem") return root.memHot
     if (metric === "gpu") return root.gpuHot
+    if (metric === "ssdTemp") return sampler.ssdHot
     if (metric === "gpuTemp") return root.gpuTempHot
     if (metric === "temp") return root.tempHot
     return root.cpuHot
@@ -81,6 +82,7 @@ BarWidget {
     if (sampler.hasGpu) out.push("gpu")
     if (sampler.hasTemp) out.push("temp")
     if (sampler.hasGpuTemp) out.push("gpuTemp")
+    if (sampler.hasSsdTemp) out.push("ssdTemp")
     return out
   }
 
@@ -125,8 +127,8 @@ BarWidget {
       var g = Commons.I18n.formatNumber(Math.round(sampler.gpu))
       return withUnit ? g + "%" : g
     }
-    if (metric === "temp" || metric === "gpuTemp") {
-      var temperature = metric === "gpuTemp" ? sampler.gpuTemp : sampler.temp
+    if (metric === "temp" || metric === "gpuTemp" || metric === "ssdTemp") {
+      var temperature = sampler[metric]
       if (!isFinite(temperature)) return "–"
       var t = Commons.I18n.formatNumber(Math.round(temperature))
       return withUnit ? t + "°" : t
@@ -139,6 +141,7 @@ BarWidget {
   function historyOf(metric) {
     if (metric === "mem") return sampler.memHistory
     if (metric === "gpu") return sampler.gpuHistory
+    if (metric === "ssdTemp") return sampler.ssdTempHistory
     if (metric === "gpuTemp") return sampler.gpuTempHistory
     if (metric === "temp") return sampler.tempHistory
     return sampler.cpuHistory
@@ -179,6 +182,9 @@ BarWidget {
       } else if (m === "gpu") {
         val = sampler.gpu >= 0 ? sampler.gpu / 100 : 0
         known = sampler.hasGpu && sampler.gpu >= 0
+      } else if (m === "ssdTemp") {
+        val = Model.tempFraction(sampler.ssdTemp)
+        known = sampler.hasSsdTemp
       } else if (m === "gpuTemp") {
         val = Model.tempFraction(sampler.gpuTemp)
         known = sampler.hasGpuTemp
@@ -332,6 +338,7 @@ BarWidget {
     if (sampler.hasGpu) presets.push(["gpu"])
     if (sampler.hasTemp) presets.push(["temp"])
     if (sampler.hasGpuTemp) presets.push(["gpuTemp"])
+    if (sampler.hasSsdTemp) presets.push(["ssdTemp"])
     presets.push(root.allAvailableMetrics)
 
     var curIdx = -1
