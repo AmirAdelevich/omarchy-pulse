@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
@@ -31,6 +32,76 @@ Panel {
   readonly property color fg: bar ? bar.foreground : Commons.Color.foreground
   readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+
+  readonly property var drives: s ? s.drives : []
+  property var smartResults: ({})
+  property string smartDrive: ""
+
+  function readSmart(id) {
+    if (smartRead.running || !/^nvme[0-9]+$/.test(id)) return
+    smartDrive = id
+    smartRead.running = true
+  }
+
+  Process {
+    id: smartRead
+    command: ["/usr/bin/pkexec", "/usr/bin/smartctl", "--json", "--health", "--attributes",
+      "--device=nvme", "/dev/" + root.smartDrive]
+
+    stdout: StdioCollector {
+      onStreamFinished: {
+        let result = null
+        try {
+          const report = JSON.parse(text)
+          const log = report.nvme_smart_health_information_log
+          if (log && Number.isFinite(log.percentage_used) && Number.isFinite(log.media_errors)) {
+            result = {
+              used: log.percentage_used,
+              errors: log.media_errors,
+              passed: report.smart_status ? report.smart_status.passed : undefined
+            }
+          }
+        } catch (error) {
+          // Authentication failures can produce no JSON.
+        }
+
+        const results = Object.assign({}, root.smartResults)
+        results[root.smartDrive] = result
+        root.smartResults = results
+      }
+    }
+  }
+
+  property var powerLimits: ({})
+
+  function watts(value) {
+    return Number.isFinite(value) ? strings.t("unit.watts").arg(num(value)) : "—"
+  }
+
+  Process {
+    id: powerPoll
+    command: ["bash", Qt.resolvedUrl("power-limits.sh").toString().replace(/^file:\/\//, "")]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const limits = {}
+        for (const line of text.trim().split("\n")) {
+          const [key, raw] = line.trim().split(/\s+/)
+          const value = Number(raw)
+          if (Number.isFinite(value) && value > 0)
+            limits[key] = key === "gpu" || key === "gpuDefault" ? value : value / 1000000
+        }
+        root.powerLimits = limits
+      }
+    }
+  }
+
+  Timer {
+    interval: 10000
+    running: root.opened
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: powerPoll.running = true
+  }
 
   readonly property real cpu: s ? s.cpu : -1
   readonly property bool cpuHot: hostWidget ? hostWidget.cpuHot : false
@@ -334,6 +405,110 @@ Panel {
             value: root.s && root.s.diskSize > 0 ? root.pair(root.s.diskUsed, root.s.diskSize) : "—"
             fraction: root.s ? root.s.diskFraction : 0
             hot: fraction >= 0.9
+          }
+        }
+
+        Column {
+          width: parent.width
+          visible: root.drives.length > 0
+          spacing: Style.space(6)
+
+          PanelSectionHeader {
+            text: strings.t("ssd.title")
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
+
+          Repeater {
+            model: root.drives
+
+            Column {
+              id: drive
+              required property var modelData
+              width: parent.width
+              spacing: Style.space(2)
+              readonly property bool critical: modelData.alarm || modelData.current >= modelData.critical
+              readonly property bool hot: critical || modelData.current >= modelData.warning
+
+              InfoPair {
+                label: drive.modelData.model || drive.modelData.id
+                value: isFinite(drive.modelData.current)
+                  ? strings.t("unit.celsius").arg(root.num(drive.modelData.current, 1)) : "—"
+              }
+
+              PlainText {
+                width: parent.width
+                elide: Text.ElideRight
+                font.pixelSize: Style.font.caption
+                color: drive.hot || drive.modelData.state !== "live" ? root.urgent : root.fg
+                opacity: 0.8
+                text: strings.t("ssd.details").arg(drive.modelData.id).arg(
+                  drive.modelData.state === "live" ? strings.t("ssd.online") : (drive.modelData.state || "—")
+                ).arg(
+                  drive.critical ? strings.t("ssd.critical") :
+                    (drive.hot ? strings.t("ssd.hot") :
+                      (isFinite(drive.modelData.warning)
+                        ? strings.t("ssd.warning").arg(root.num(drive.modelData.warning, 1))
+                        : strings.t("ssd.noThreshold")))
+                )
+              }
+
+              Row {
+                width: parent.width
+                spacing: Style.space(8)
+
+                Button {
+                  id: smartButton
+                  text: strings.t("ssd.readSmart")
+                  enabled: !smartRead.running
+                  fontSize: Style.font.caption
+                  foreground: root.fg
+                  fontFamily: root.fontFamily
+                  horizontalPadding: Style.space(8)
+                  verticalPadding: Style.space(3)
+                  bordered: true
+                  onClicked: root.readSmart(drive.modelData.id)
+                }
+
+                PlainText {
+                  readonly property var result: root.smartResults[drive.modelData.id]
+                  width: Math.max(0, parent.width - smartButton.width - parent.spacing)
+                  anchors.verticalCenter: parent.verticalCenter
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WordWrap
+                  color: result && (result.passed === false || result.errors > 0 || result.used >= 100)
+                    ? root.urgent : root.fg
+                  text: smartRead.running && root.smartDrive === drive.modelData.id
+                    ? strings.t("ssd.readingSmart")
+                    : result ? strings.t("ssd.smartDetails").arg(
+                        result.passed === true ? strings.t("ssd.smartPassed")
+                          : result.passed === false ? strings.t("ssd.smartFailed") : "—"
+                      ).arg(root.num(result.used)).arg(root.num(result.errors))
+                      : result === null ? strings.t("ssd.smartUnavailable") : ""
+                }
+              }
+            }
+          }
+        }
+
+        Column {
+          width: parent.width
+          spacing: Style.space(4)
+
+          PanelSectionHeader {
+            text: strings.t("power.title")
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
+
+          InfoPair {
+            label: strings.t("power.cpu")
+            value: root.watts(root.powerLimits.cpuLong) + " / " + root.watts(root.powerLimits.cpuShort)
+          }
+
+          InfoPair {
+            label: strings.t(root.powerLimits.gpuDefault ? "power.gpuDefault" : "power.gpu")
+            value: root.watts(root.powerLimits.gpu || root.powerLimits.gpuDefault || root.powerLimits.gpuMicrowatts)
           }
         }
 
