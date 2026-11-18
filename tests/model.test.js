@@ -15,8 +15,8 @@ function check(name, actual, expected) {
 }
 
 // ---- settings
-check("defaults", M.normalize(undefined), { style: "text", metric: "cpu", metrics: ["cpu", "mem", "gpu", "temp", "gpuTemp", "ssdTemp"], metricOrder: ["cpu", "mem", "gpu", "temp", "gpuTemp", "ssdTemp"], interval: 2, alert: 90 })
-check("unknown style falls back", M.normalize({ style: "<b>x</b>" }).style, "text")
+check("defaults", M.normalize(undefined), { style: "pulse", metric: "cpu", metrics: ["cpu"], metricOrder: ["cpu", "mem", "gpu", "temp", "gpuTemp", "ssdTemp"], interval: 2, alert: 90 })
+check("unknown style falls back", M.normalize({ style: "<b>x</b>" }).style, "pulse")
 check("interval clamps low", M.normalize({ interval: 0 }).interval, 1)
 check("interval clamps high", M.normalize({ interval: 999 }).interval, 10)
 check("interval junk", M.normalize({ interval: "abc" }).interval, 2)

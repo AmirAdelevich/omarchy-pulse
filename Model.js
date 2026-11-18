@@ -14,7 +14,7 @@ var ROW_ICONS = {
   up: "󰕒", load: "󰊚", uptime: "󰅐",
   vram: "\uDB81\uDE1A"
 }
-var DEFAULTS = { style: "text", metric: "cpu", metrics: METRICS.slice(), metricOrder: ["cpu", "mem", "gpu", "temp", "gpuTemp", "ssdTemp"], interval: 2, alert: 90 }
+var DEFAULTS = { style: "pulse", metric: "cpu", metrics: ["cpu"], metricOrder: ["cpu", "mem", "gpu", "temp", "gpuTemp", "ssdTemp"], interval: 2, alert: 90 }
 
 // Temperature meters span 30..100 °C: a CPU never idles at 0, so a scale
 // from zero would leave every meter half full on a cold machine.
@@ -71,7 +71,7 @@ function normalize(settings) {
     }
   }
   if (metrics.length === 0) {
-    metrics = DEFAULTS.metrics.slice()
+    metrics = s.style === "bars" ? METRICS.slice() : [DEFAULTS.metric]
   }
 
   var metricOrder = []
