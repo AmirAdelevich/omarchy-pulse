@@ -66,9 +66,12 @@
   "ssd.smartUnavailable": "Could not read SMART",
   "metric.ssdTemp": "SSD temp",
   "tip.ssdTemp": "Hottest SSD %1 °C",
-  "power.title": "Power limits",
+  "power.title": "Power",
   "power.cpu": "CPU PL1 / PL2",
   "power.gpu": "GPU",
   "power.gpuDefault": "GPU default",
+  "power.cpuNow": "CPU now",
+  "power.coreNow": "CPU cores now",
+  "power.gpuNow": "GPU now",
   "unit.watts": "%1 W"
 }

@@ -71,6 +71,18 @@ Add Pulse to your bar in `~/.config/omarchy/shell.json` under `bar.layout`:
 
 <br>
 
+## Live power draw
+
+The panel shows current CPU (Intel RAPL) and GPU (`nvidia-smi` or AMD hwmon) power in watts. Reading the RAPL counters needs a narrowly scoped sudoers rule for two files; without it CPU watts are unavailable while GPU watts still work:
+
+```sudoers
+<username> ALL=(root) NOPASSWD: /usr/bin/cat /sys/class/powercap/intel-rapl\:0/energy_uj, /usr/bin/cat /sys/class/powercap/intel-rapl\:0\:0/energy_uj
+```
+
+Installed as `/etc/sudoers.d/pulse-rapl`.
+
+<br>
+
 ## Removal
 
 To remove the plugin safely:

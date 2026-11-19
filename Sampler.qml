@@ -32,6 +32,37 @@ Item {
     || drive.current >= drive.warning || drive.current >= drive.critical)
   property var ssdTempHistory: []
 
+  // Live power draw in watts (RAPL for the CPU, nvidia-smi/amdgpu for the GPU).
+  property real packageWatts: NaN
+  property real coreWatts: NaN
+  property real gpuWatts: NaN
+  readonly property bool hasPowerDraw: Number.isFinite(packageWatts) || Number.isFinite(gpuWatts)
+
+  Process {
+    id: powerDrawPoll
+    command: ["bash", Qt.resolvedUrl("power-draw.sh").toString().replace(/^file:\/\//, "")]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        for (const line of text.trim().split("\n")) {
+          const [key, raw] = line.trim().split(/\s+/)
+          const value = Number(raw)
+          if (!Number.isFinite(value)) continue
+          if (key === "package") root.packageWatts = value
+          else if (key === "core") root.coreWatts = value
+          else if (key === "gpu") root.gpuWatts = value
+        }
+      }
+    }
+  }
+
+  Timer {
+    interval: 3000
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: powerDrawPoll.running = true
+  }
+
   Process {
     id: drivePoll
     command: ["bash", Qt.resolvedUrl("nvme-status.sh").toString().replace(/^file:\/\//, "")]

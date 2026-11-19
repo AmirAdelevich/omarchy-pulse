@@ -510,6 +510,21 @@ Panel {
             label: strings.t(root.powerLimits.gpuDefault ? "power.gpuDefault" : "power.gpu")
             value: root.watts(root.powerLimits.gpu || root.powerLimits.gpuDefault || root.powerLimits.gpuMicrowatts)
           }
+
+          InfoPair {
+            label: strings.t("power.cpuNow")
+            value: root.watts(root.s ? root.s.packageWatts : NaN)
+          }
+
+          InfoPair {
+            label: strings.t("power.coreNow")
+            value: root.watts(root.s ? root.s.coreWatts : NaN)
+          }
+
+          InfoPair {
+            label: strings.t("power.gpuNow")
+            value: root.watts(root.s ? root.s.gpuWatts : NaN)
+          }
         }
 
         // ---------- Network, load, uptime ----------

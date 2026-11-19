@@ -71,6 +71,18 @@ omarchy restart shell
 
 <br>
 
+## Мощность в реальном времени
+
+Панель показывает текущее потребление CPU (Intel RAPL) и GPU (`nvidia-smi` или AMD hwmon) в ваттах. Для счётчиков RAPL нужно узкое правило sudo на чтение двух файлов (без него ватты CPU недоступны, ватты GPU работают и так):
+
+```sudoers
+<username> ALL=(root) NOPASSWD: /usr/bin/cat /sys/class/powercap/intel-rapl\:0/energy_uj, /usr/bin/cat /sys/class/powercap/intel-rapl\:0\:0/energy_uj
+```
+
+Правило установлено в `/etc/sudoers.d/pulse-rapl`.
+
+<br>
+
 ## Удаление
 
 Безопасное удаление плагина:
